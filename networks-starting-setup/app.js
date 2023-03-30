@@ -2,11 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios').default;
 const mongoose = require('mongoose');
-
+const env = require('dotenv');
 const Favorite = require('./models/favorite');
 
-const app = express();
+env.config();
+const { MONGO_HOSTNAME, MONGO_PORT = 27017, APP_PORT = 3000 } = process.env
 
+const app = express();
 app.use(bodyParser.json());
 
 app.get('/favorites', async (req, res) => {
@@ -67,8 +69,14 @@ app.get('/people', async (req, res) => {
   }
 });
 
+console.log(`APP_PORT :`, APP_PORT);
+console.log(`MONGO_HOSTNAME :`, MONGO_HOSTNAME);
+
 mongoose.connect(
-  'mongodb://host.docker.internal:27017/swfavorites',
+  // 'mongodb://host.docker.internal:27017/swfavorites',
+  // $ docker inspect {container}
+  // "IPAddress": "172.17.0.2"
+  `mongodb://${MONGO_HOSTNAME}:${MONGO_PORT}/swfavorites`,
   { useNewUrlParser: true },
   (err) => {
     if (err) {
