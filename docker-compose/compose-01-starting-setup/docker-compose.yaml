@@ -1,0 +1,58 @@
+# 도커 컴포즈 Document 문법에 대한 버전명
+version: "3.8"
+# 실행할 컨테이너들
+services:
+  # 생성할 컨테이너명 (엄밀히 말하자면 생성될 컨테이너명의 일부)
+  mongodb:
+    # 이미지명
+    image: mongo
+    # 도커 컴포즈 실행 시 자동으로 컨테이너명이 지정되나 명시적으로 컨테이너명을 설정할 수도 있음.
+    # container_name: mongodb
+    # 컨테이너에서 사용할 볼륨 리스트
+    volumes:
+      - data:/data/db
+    # 환경 변수 설정
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: secret
+    # 읽어올 환경변수 파일 지정
+    env_file:
+      - ./env/mongo.env
+  backend:
+    # build: ./backend
+      # 직접 이미지 빌드
+      build:
+        # 빌드할 Dockerfile 경로
+        context: ./backend
+        # 도커파일명
+        dockerfile: Dockerfile
+        # Dockerfile == ARG some-arg=1
+        args:
+          some-arg: 1
+      # 호스트포트:컨테이너포트
+      ports:
+        - '80:80'
+      volumes:
+        - logs:/app/logs
+        - ./backend:/app
+        - /app/node_modules
+      env_file:
+        - ./env/backend.env
+      # 지정한 컨테이너가 실행된 뒤 실핼하도록 지정 (실행 의존성 설정)
+      depends_on:
+        - mongodb
+  frontend:
+    build: ./frontend
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend/src:/app/src
+    # -it
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+# 컨테이너에서 사용하는 named 볼륨은 모두 여기에서 작성되어 있어야 한다.
+volumes:
+  data:
+  logs:
